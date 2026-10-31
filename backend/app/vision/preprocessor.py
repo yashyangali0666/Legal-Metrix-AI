@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import os
+from PIL import Image, ImageOps
 from typing import Tuple, Dict, Any, List
 
 class ImagePreprocessor:
@@ -10,14 +11,46 @@ class ImagePreprocessor:
     """
 
     @staticmethod
+    def read_image_safely(input_path: str) -> np.ndarray:
+        """
+        Robustly reads any packaging image (JPG, PNG, WEBP, CMYK) on all platforms,
+        handling Windows unicode paths and EXIF rotation properly.
+        """
+        # Method 1: PIL Image (handles color spaces, WebP, EXIF orientation, and unicode paths)
+        try:
+            pil_img = Image.open(input_path)
+            # Correct EXIF orientation if present (e.g., smartphone photos)
+            pil_img = ImageOps.exif_transpose(pil_img)
+            pil_img = pil_img.convert("RGB")
+            np_arr = np.array(pil_img)
+            return cv2.cvtColor(np_arr, cv2.COLOR_RGB2BGR)
+        except Exception:
+            pass
+
+        # Method 2: numpy fromfile + cv2.imdecode (immune to Windows backslash/path issues)
+        try:
+            with open(input_path, "rb") as f:
+                bytes_arr = np.frombuffer(f.read(), dtype=np.uint8)
+                img = cv2.imdecode(bytes_arr, cv2.IMREAD_COLOR)
+                if img is not None:
+                    return img
+        except Exception:
+            pass
+
+        # Method 3: Standard cv2.imread fallback
+        img = cv2.imread(input_path)
+        if img is not None:
+            return img
+
+        raise ValueError(f"Could not read or decode image file from {input_path}. Verify that the uploaded file is a valid image.")
+
+    @staticmethod
     def preprocess_image(input_path: str, output_path: str) -> Dict[str, Any]:
         """
         Reads packaging image, calculates quality metrics, improves contrast,
         removes noise, corrects slight skew, and saves preprocessed version.
         """
-        img = cv2.imread(input_path)
-        if img is None:
-            raise ValueError(f"Could not read image from {input_path}")
+        img = ImagePreprocessor.read_image_safely(input_path)
 
         height, width, channels = img.shape
         file_size = os.path.getsize(input_path)
@@ -115,8 +148,9 @@ class ImagePreprocessor:
         """
         Detects candidate bounding box text regions using morphological operations.
         """
-        img = cv2.imread(img_path)
-        if img is None:
+        try:
+            img = ImagePreprocessor.read_image_safely(img_path)
+        except Exception:
             return []
 
         h, w = img.shape[:2]

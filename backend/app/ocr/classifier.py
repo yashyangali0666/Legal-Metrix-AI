@@ -111,8 +111,8 @@ class DeclarationClassifier:
             conf = 0.94 if has_tax_phrase else 0.82
             bbox = cls._find_matching_bbox(raw_val, lines)
         else:
-            # Fallback loose search for standalone currency numbers
-            standalone = re.search(r'(?:Rs\.?|₹)\s*([0-9]+(?:\.[0-9]{1,2})?)', text, re.IGNORECASE)
+            # Fallback search for standalone currency numbers (ensuring word boundaries)
+            standalone = re.search(r'\b(?:Rs\.?|INR|₹)\s*([0-9]+(?:\.[0-9]{1,2})?)\b', text, re.IGNORECASE)
             if standalone:
                 raw_val = standalone.group(0).strip()
                 norm_val = f"₹{float(standalone.group(1)):.2f}"
@@ -134,6 +134,11 @@ class DeclarationClassifier:
     @classmethod
     def _extract_net_quantity(cls, lines: List[Dict[str, Any]], text: str) -> Dict[str, Any]:
         # Rule 6(1)(c) - Net quantity in g, kg, ml, l, piece, N
+        # 1. Dual declaration or imperial-metric pattern e.g., "NET WT 5.28 OZ (149.6g)" or "12 FL OZ (355 mL)"
+        dual_pattern = r'(?:Net\s*(?:Qty|Quantity|Wt|Weight|Contents|Volume)|NETWT|FL\s*OZ)[\s\S]*?\(([0-9]+(?:\.[0-9]+)?)\s*(kg|g|gm|grams|ml|l|ltr|litres|liters)\)'
+        dual_match = re.search(dual_pattern, text, re.IGNORECASE)
+
+        # 2. Standard direct pattern e.g., "Net Qty: 150 g", "Net Weight: 500g", "Net Volume: 1 L"
         pattern = r'(?:Net\s*(?:Qty|Quantity|Wt|Weight|Contents|Volume)|Contents|Qty)[\s:]*([0-9]+(?:\.[0-9]+)?)\s*(kg|g|gm|grams|ml|l|ltr|litres|liters|piece|pcs|N|count)\b'
         match = re.search(pattern, text, re.IGNORECASE)
 
@@ -142,7 +147,18 @@ class DeclarationClassifier:
         conf = 0.0
         bbox = None
 
-        if match:
+        if dual_match:
+            raw_val = dual_match.group(0).strip()
+            amount = dual_match.group(1)
+            unit = dual_match.group(2).lower()
+            if unit in ["gm", "grams"]:
+                unit = "g"
+            elif unit in ["ltr", "litres", "liters"]:
+                unit = "ml" if float(amount) < 1 else "L"
+            norm_val = f"{amount} {unit}"
+            conf = 0.92
+            bbox = cls._find_matching_bbox(raw_val, lines)
+        elif match:
             raw_val = match.group(0).strip()
             amount = match.group(1)
             unit = match.group(2).lower()
@@ -154,8 +170,13 @@ class DeclarationClassifier:
             conf = 0.95
             bbox = cls._find_matching_bbox(raw_val, lines)
         else:
-            # Standalone quantity search (e.g., "500 g", "1.5 kg", "200 ml")
-            loose_match = re.search(r'\b([0-9]+(?:\.[0-9]+)?)\s*(kg|g|gm|ml|l|ltr)\b', text, re.IGNORECASE)
+            # Standalone quantity search, skipping nutrition table keywords
+            clean_lines = [
+                l.get("text", "") for l in lines
+                if not any(k in l.get("text", "").lower() for k in ["serving", "servings", "sodium", "fat", "sugars", "protein", "cholesterol", "carb", "fiber", "calcium", "iron", "potas", "daily"])
+            ]
+            clean_text = "\n".join(clean_lines)
+            loose_match = re.search(r'\b([0-9]+(?:\.[0-9]+)?)\s*(kg|g|gm|ml|l|ltr)\b', clean_text, re.IGNORECASE)
             if loose_match:
                 raw_val = loose_match.group(0).strip()
                 norm_val = raw_val

@@ -78,7 +78,7 @@ def approve_declaration(
         raise HTTPException(status_code=404, detail="Declaration not found")
 
     decl.is_manually_corrected = True
-    decl.corrected_value = action_in.corrected_value or decl.normalized_value or decl.raw_value
+    decl.corrected_value = action_in.corrected_value or decl.normalized_value or decl.raw_value or "VERIFIED_COMPLIANT"
     decl.corrected_by = current_user.full_name
     decl.corrected_at = datetime.utcnow()
 
@@ -86,8 +86,8 @@ def approve_declaration(
     v_rec = VerificationRecord(
         inspection_id=decl.inspection_id,
         declaration_id=decl.id,
-        previous_value=decl.raw_value,
-        new_value=decl.corrected_value,
+        previous_value=decl.raw_value or "NONE",
+        new_value=decl.corrected_value or "VERIFIED_COMPLIANT",
         action="approved",
         comments=action_in.comments or f"Approved by Inspector {current_user.full_name}",
         verified_by=current_user.full_name,

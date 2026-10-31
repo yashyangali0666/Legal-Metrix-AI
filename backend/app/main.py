@@ -59,6 +59,9 @@ app.add_middleware(
 app.mount("/backend/uploads", StaticFiles(directory="backend/uploads"), name="uploads")
 app.mount("/backend/sample_images", StaticFiles(directory="backend/sample_images"), name="sample_images")
 app.mount("/backend/generated_reports", StaticFiles(directory="backend/generated_reports"), name="reports")
+app.mount("/uploads", StaticFiles(directory="backend/uploads"), name="uploads_root")
+app.mount("/sample_images", StaticFiles(directory="backend/sample_images"), name="sample_images_root")
+app.mount("/reports", StaticFiles(directory="backend/generated_reports"), name="reports_root")
 
 # Register API routers
 app.include_router(auth_router, prefix="/api")

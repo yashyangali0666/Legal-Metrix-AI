@@ -35,7 +35,7 @@ async def upload_inspection_images(
     brand: str = Form(...),
     category: str = Form(...),
     declared_net_quantity: Optional[str] = Form(None),
-    declared_mrp: Optional[float] = Form(None),
+    declared_mrp: Optional[str] = Form(None),
     country_of_origin: Optional[str] = Form("India"),
     label_type: Optional[str] = Form("front"),
     state_location: Optional[str] = Form("Delhi NCT"),
@@ -43,10 +43,20 @@ async def upload_inspection_images(
     db: Session = Depends(get_db)
 ):
     if not files:
-        raise HTTPException(status_code=400, detail="No files provided")
+        raise HTTPException(status_code=400, detail="No files provided. Please select or upload at least one image.")
 
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     insp_id = f"INSP-{datetime.utcnow().strftime('%Y')}-{uuid.uuid4().hex[:6].upper()}"
+
+    # Parse and sanitize declared_mrp if provided
+    parsed_mrp: Optional[float] = None
+    if declared_mrp is not None and str(declared_mrp).strip() != "":
+        clean_mrp_str = "".join([c for c in str(declared_mrp) if c.isdigit() or c == "."])
+        if clean_mrp_str:
+            try:
+                parsed_mrp = float(clean_mrp_str)
+            except ValueError:
+                parsed_mrp = None
 
     # 1. Create Product
     product = Product(
@@ -54,7 +64,7 @@ async def upload_inspection_images(
         brand=brand,
         category=category,
         declared_net_quantity=declared_net_quantity,
-        declared_mrp=declared_mrp,
+        declared_mrp=parsed_mrp,
         country_of_origin=country_of_origin
     )
     db.add(product)
@@ -74,17 +84,19 @@ async def upload_inspection_images(
 
     uploaded_image_records = []
     for file in files:
-        ext = os.path.splitext(file.filename)[1].lower()
+        ext = os.path.splitext(file.filename)[1].lower() if file.filename else ".jpg"
         if ext not in ALLOWED_EXTENSIONS:
-            raise HTTPException(status_code=400, detail=f"Unsupported file format: {ext}. Use JPG, PNG, or WEBP.")
+            ext = ".jpg"
+
+        contents = await file.read()
+        if len(contents) > MAX_FILE_SIZE:
+            raise HTTPException(status_code=400, detail=f"File '{file.filename}' exceeds 25MB maximum upload limit.")
+        if len(contents) < 50:
+            raise HTTPException(status_code=400, detail=f"File '{file.filename}' is empty or not a valid image.")
 
         # Save original file
         file_filename = f"{insp_id}_{uuid.uuid4().hex[:6]}{ext}"
         original_filepath = os.path.join(UPLOAD_DIR, file_filename)
-
-        contents = await file.read()
-        if len(contents) > MAX_FILE_SIZE:
-            raise HTTPException(status_code=400, detail="File exceeds 25MB maximum upload limit.")
 
         with open(original_filepath, "wb") as f:
             f.write(contents)

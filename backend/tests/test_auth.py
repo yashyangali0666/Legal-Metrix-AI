@@ -69,3 +69,4 @@ def test_auth_me_endpoint():
     me_data = me_res.json()
     assert me_data["username"] == "admin"
     assert me_data["role"] == "admin"
+

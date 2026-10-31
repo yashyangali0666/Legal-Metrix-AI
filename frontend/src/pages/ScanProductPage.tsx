@@ -38,6 +38,36 @@ export const ScanProductPage: React.FC = () => {
 
   const sampleProducts = [
     {
+      label: "Chips Ahoy! Real Chocolate Chip Cookies (Compliant Specimen)",
+      brand: "Chips Ahoy / Mondelēz",
+      name: "Original Real Chocolate Chip Cookies",
+      category: "Food & Beverages",
+      netQty: "100 g",
+      mrp: "200",
+      origin: "India",
+      sampleFilename: "chips_ahoy_original.jpg"
+    },
+    {
+      label: "Coca-Cola 12 fl oz (355ml Can Specimen)",
+      brand: "The Coca-Cola Company",
+      name: "Coca-Cola Original Carbonated Beverage",
+      category: "Food & Beverages",
+      netQty: "355 ml",
+      mrp: "40",
+      origin: "USA / India",
+      sampleFilename: "coca_cola_12oz.jpg"
+    },
+    {
+      label: "Skinny Cow Divines Caramel Filled Chocolate 149.6g",
+      brand: "Nestlé Skinny Cow",
+      name: "Divines Caramel Filled Chocolate Squares",
+      category: "Food & Beverages",
+      netQty: "149.6 g",
+      mrp: "180",
+      origin: "USA / India",
+      sampleFilename: "skinny_cow_caramel.jpg"
+    },
+    {
       label: "Haldiram's Aloo Bhujia 150g (Compliant)",
       brand: "Haldiram's",
       name: "Aloo Bhujia Crispy Snacks",
@@ -126,11 +156,16 @@ export const ScanProductPage: React.FC = () => {
     setDeclaredNetQty(sample.netQty);
     setDeclaredMRP(sample.mrp);
     setCountryOfOrigin(sample.origin);
+    setError(null);
 
     try {
-      const response = await fetch(`/backend/sample_images/${sample.sampleFilename}`);
+      // First try /sample_images/ then fallback to /backend/sample_images/
+      let response = await fetch(`/sample_images/${sample.sampleFilename}`);
+      if (!response.ok || !response.headers.get('content-type')?.includes('image')) {
+        response = await fetch(`/backend/sample_images/${sample.sampleFilename}`);
+      }
       const blob = await response.blob();
-      const file = new File([blob], sample.sampleFilename, { type: 'image/jpeg' });
+      const file = new File([blob], sample.sampleFilename, { type: blob.type && blob.type.startsWith('image/') ? blob.type : 'image/jpeg' });
       setFiles([file]);
 
       const reader = new FileReader();
@@ -142,6 +177,7 @@ export const ScanProductPage: React.FC = () => {
       reader.readAsDataURL(file);
     } catch (err) {
       console.error('Failed to load sample image', err);
+      setError('Could not load sample specimen image. Please browse an image file directly.');
     }
   };
 
@@ -192,7 +228,20 @@ export const ScanProductPage: React.FC = () => {
       navigate(`/compliance?id=${inspectionId}`);
     } catch (err: any) {
       console.error('Processing failed', err);
-      setError(err?.response?.data?.detail || 'An error occurred during inspection processing.');
+      let errorMsg = 'An error occurred during inspection processing.';
+      if (err?.response?.data?.detail) {
+        const detail = err.response.data.detail;
+        if (typeof detail === 'string') {
+          errorMsg = detail;
+        } else if (Array.isArray(detail)) {
+          errorMsg = detail.map((d: any) => d.msg || JSON.stringify(d)).join('; ');
+        } else if (typeof detail === 'object') {
+          errorMsg = JSON.stringify(detail);
+        }
+      } else if (err?.message) {
+        errorMsg = err.message;
+      }
+      setError(errorMsg);
       setIsProcessing(false);
     }
   };
