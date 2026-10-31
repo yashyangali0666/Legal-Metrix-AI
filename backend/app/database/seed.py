@@ -23,41 +23,70 @@ def init_db():
     Base.metadata.create_all(bind=engine)
 
 def seed_users(db: Session):
-    existing_admin = db.query(User).filter(User.username == "admin").first()
-    if not existing_admin:
-        admin_user = User(
-            username="admin",
-            email="admin@legalmetrix.gov.in",
-            hashed_password=get_password_hash("Admin@123"),
-            full_name="Chief Legal Metrology Controller",
-            role="admin",
-            department="Headquarters Enforcement Cell",
-            badge_number="LM-DL-HQ-01",
-            is_active=True
-        )
-        inspector_user = User(
-            username="inspector_rajesh",
-            email="rajesh.kumar@legalmetrix.gov.in",
-            hashed_password=get_password_hash("Inspector@123"),
-            full_name="Rajesh Kumar",
-            role="inspector",
-            department="Delhi North District Inspection Unit",
-            badge_number="LM-DL-N-42",
-            is_active=True
-        )
-        reviewer_user = User(
-            username="reviewer_anita",
-            email="anita.sharma@legalmetrix.gov.in",
-            hashed_password=get_password_hash("Reviewer@123"),
-            full_name="Anita Sharma",
-            role="reviewer",
-            department="Statutory Standards Review Board",
-            badge_number="LM-REV-07",
-            is_active=True
-        )
-        db.add_all([admin_user, inspector_user, reviewer_user])
-        db.commit()
-        print("[SEED] Default Users created: admin, inspector_rajesh, reviewer_anita")
+    default_accounts = [
+        {
+            "username": "admin",
+            "email": "admin@legalmetrix.gov.in",
+            "password": "Admin@123",
+            "full_name": "Chief Legal Metrology Controller",
+            "role": "admin",
+            "department": "Headquarters Enforcement Cell",
+            "badge_number": "LM-DL-HQ-01"
+        },
+        {
+            "username": "inspector",
+            "email": "inspector@legalmetrix.gov.in",
+            "password": "Inspector@123",
+            "full_name": "Field Inspector (Delhi)",
+            "role": "inspector",
+            "department": "Delhi North District Inspection Unit",
+            "badge_number": "LM-DL-N-01"
+        },
+        {
+            "username": "inspector_rajesh",
+            "email": "rajesh.kumar@legalmetrix.gov.in",
+            "password": "Inspector@123",
+            "full_name": "Rajesh Kumar",
+            "role": "inspector",
+            "department": "Delhi North District Inspection Unit",
+            "badge_number": "LM-DL-N-42"
+        },
+        {
+            "username": "reviewer",
+            "email": "reviewer@legalmetrix.gov.in",
+            "password": "Reviewer@123",
+            "full_name": "Senior Review Officer",
+            "role": "reviewer",
+            "department": "Statutory Standards Review Board",
+            "badge_number": "LM-REV-01"
+        },
+        {
+            "username": "reviewer_anita",
+            "email": "anita.sharma@legalmetrix.gov.in",
+            "password": "Reviewer@123",
+            "full_name": "Anita Sharma",
+            "role": "reviewer",
+            "department": "Statutory Standards Review Board",
+            "badge_number": "LM-REV-07"
+        }
+    ]
+
+    for acc in default_accounts:
+        existing = db.query(User).filter(User.username == acc["username"]).first()
+        if not existing:
+            new_u = User(
+                username=acc["username"],
+                email=acc["email"],
+                hashed_password=get_password_hash(acc["password"]),
+                full_name=acc["full_name"],
+                role=acc["role"],
+                department=acc["department"],
+                badge_number=acc["badge_number"],
+                is_active=True
+            )
+            db.add(new_u)
+    db.commit()
+    print("[SEED] Default Users verified and seeded.")
 
 def seed_rules(db: Session):
     for r in OFFICIAL_LMR_RULES:

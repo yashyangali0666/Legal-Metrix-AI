@@ -125,7 +125,7 @@ export const LoginPage: React.FC = () => {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. inspector_rajesh or admin"
+                    placeholder="e.g. inspector or admin (or official email)"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-govNavy-900 dark:text-white focus:ring-2 focus:ring-deepBlue outline-none text-xs transition-colors"
@@ -191,35 +191,38 @@ export const LoginPage: React.FC = () => {
               <div className="grid grid-cols-3 gap-2 text-[11px]">
                 <button
                   type="button"
-                  onClick={() => handleQuickLogin('inspector_rajesh', 'Inspector@123')}
-                  className="p-2 rounded-xl bg-slate-50 hover:bg-blue-50 dark:bg-slate-900 dark:hover:bg-blue-950/40 border border-slate-200 dark:border-slate-800 text-left transition-colors group"
+                  onClick={() => handleQuickLogin('inspector', 'Inspector@123')}
+                  className="p-2 rounded-xl bg-slate-50 hover:bg-blue-50 dark:bg-slate-900 dark:hover:bg-blue-950/40 border border-slate-200 dark:border-slate-800 text-left transition-colors group cursor-pointer"
                 >
                   <div className="font-bold text-govNavy-900 dark:text-white group-hover:text-deepBlue dark:group-hover:text-cyanAccent truncate">
                     Inspector
                   </div>
-                  <div className="text-[10px] text-slate-400">Rajesh Kumar</div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleQuickLogin('reviewer_anita', 'Reviewer@123')}
-                  className="p-2 rounded-xl bg-slate-50 hover:bg-blue-50 dark:bg-slate-900 dark:hover:bg-blue-950/40 border border-slate-200 dark:border-slate-800 text-left transition-colors group"
-                >
-                  <div className="font-bold text-govNavy-900 dark:text-white group-hover:text-deepBlue dark:group-hover:text-cyanAccent truncate">
-                    Reviewer
-                  </div>
-                  <div className="text-[10px] text-slate-400">Anita Sharma</div>
+                  <div className="text-[10px] text-slate-400">inspector</div>
+                  <div className="text-[9px] text-slate-400">Inspector@123</div>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => handleQuickLogin('admin', 'Admin@123')}
-                  className="p-2 rounded-xl bg-slate-50 hover:bg-blue-50 dark:bg-slate-900 dark:hover:bg-blue-950/40 border border-slate-200 dark:border-slate-800 text-left transition-colors group"
+                  className="p-2 rounded-xl bg-slate-50 hover:bg-blue-50 dark:bg-slate-900 dark:hover:bg-blue-950/40 border border-slate-200 dark:border-slate-800 text-left transition-colors group cursor-pointer"
                 >
                   <div className="font-bold text-govNavy-900 dark:text-white group-hover:text-deepBlue dark:group-hover:text-cyanAccent truncate">
                     Admin
                   </div>
-                  <div className="text-[10px] text-slate-400">Controller</div>
+                  <div className="text-[10px] text-slate-400">admin</div>
+                  <div className="text-[9px] text-slate-400">Admin@123</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleQuickLogin('reviewer', 'Reviewer@123')}
+                  className="p-2 rounded-xl bg-slate-50 hover:bg-blue-50 dark:bg-slate-900 dark:hover:bg-blue-950/40 border border-slate-200 dark:border-slate-800 text-left transition-colors group cursor-pointer"
+                >
+                  <div className="font-bold text-govNavy-900 dark:text-white group-hover:text-deepBlue dark:group-hover:text-cyanAccent truncate">
+                    Reviewer
+                  </div>
+                  <div className="text-[10px] text-slate-400">reviewer</div>
+                  <div className="text-[9px] text-slate-400">Reviewer@123</div>
                 </button>
               </div>
             </div>
