@@ -33,7 +33,7 @@ def require_admin(user: User = Depends(get_current_user)) -> User:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Administrator role required")
     return user
 
-@router.post("/register", response_model=UserResponse)
+@router.post("/register", response_model=Token)
 def register(user_in: UserRegister, db: Session = Depends(get_db)):
     existing = db.query(User).filter((User.username == user_in.username) | (User.email == user_in.email)).first()
     if existing:
@@ -64,7 +64,13 @@ def register(user_in: UserRegister, db: Session = Depends(get_db)):
     db.add(audit)
     db.commit()
 
-    return new_user
+    token = create_access_token(data={"sub": new_user.username, "role": new_user.role})
+
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": new_user
+    }
 
 @router.post("/login", response_model=Token)
 def login(creds: UserLogin, db: Session = Depends(get_db)):

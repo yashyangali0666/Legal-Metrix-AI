@@ -4,16 +4,15 @@ import {
   Bell,
   Sun,
   Moon,
-  ShieldCheck,
-  UserCheck,
-  CheckCircle2,
   ChevronDown,
-  Layers,
-  Sparkles,
-  ExternalLink
+  CheckCircle2,
+  LogOut,
+  User as UserIcon,
+  ShieldCheck
 } from 'lucide-react';
 import { User, UserRole } from '../types';
 import { ApiService } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 interface TopNavProps {
   currentUser: User | null;
@@ -24,11 +23,18 @@ interface TopNavProps {
 export const TopNav: React.FC<TopNavProps> = ({ currentUser, onSwitchRole, pendingCount = 0 }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     return localStorage.getItem('theme') === 'dark' || document.documentElement.classList.contains('dark');
   });
   const [showRoleMenu, setShowRoleMenu] = useState(false);
   const [healthStatus, setHealthStatus] = useState<any>(null);
+
+  const handleLogout = async () => {
+    setShowRoleMenu(false);
+    await logout();
+    navigate('/login', { replace: true });
+  };
 
   useEffect(() => {
     if (darkMode) {
@@ -169,6 +175,16 @@ export const TopNav: React.FC<TopNavProps> = ({ currentUser, onSwitchRole, pendi
                 </div>
                 {currentUser?.role === 'reviewer' && <CheckCircle2 className="w-4 h-4 text-deepBlue dark:text-cyanAccent" />}
               </button>
+
+              <div className="border-t border-slate-100 dark:border-slate-800 my-1 pt-1">
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left px-4 py-2 text-xs text-errorRed hover:bg-red-50 dark:hover:bg-red-950/30 flex items-center gap-2 font-semibold transition-colors"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Sign Out of Portal</span>
+                </button>
+              </div>
             </div>
           )}
         </div>

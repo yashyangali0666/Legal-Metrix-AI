@@ -26,6 +26,15 @@ api.interceptors.request.use((config) => {
 
 export const ApiService = {
   // Auth
+  register: async (userData: any) => {
+    const res = await api.post('/auth/register', userData);
+    if (res.data.access_token) {
+      localStorage.setItem('legalmetrix_token', res.data.access_token);
+      localStorage.setItem('legalmetrix_user', JSON.stringify(res.data.user));
+    }
+    return res.data;
+  },
+
   login: async (username: string, password: string) => {
     const res = await api.post('/auth/login', { username, password });
     if (res.data.access_token) {
