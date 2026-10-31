@@ -1,0 +1,11 @@
+{
+  "name": "legalmetrix-ai",
+  "version": "2.0.0",
+  "private": true,
+  "description": "AI-Powered Packaged Commodity Legal Metrology Compliance Inspection Platform",
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "build": "cd frontend && npm install && npm run build",
+    "start": "npm --prefix frontend run preview"
+  }
+}
